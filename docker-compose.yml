@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  vuejs-dev:
+    build:
+      context: .
+    ports:
+      - '5173:5173' # Map Vite's dev server port
+    volumes:
+      - .:/app # Bind mount the source code for live reloading
+      - /app/node_modules # Prevent overwriting `node_modules` on bind mount
+    container_name: dashboard_triton
