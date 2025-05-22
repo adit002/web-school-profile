@@ -1,33 +1,13 @@
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import PaginationField from '@/components/common/PaginationField.vue'
+import { useAuthStore } from '@/store/authStore'
+import ToastMessage from '@/components/common/ToastMessage.vue'
 
-const contents = ref([
-  {
-    image: 'https://wpvip.edutopia.org/wp-content/uploads/2022/10/shutterstock_1958383675-crop.jpg',
-    title: 'Kegiatan Pramuka',
-    date: '2025-05-20',
-    description: 'Siswa mengikuti kegiatan pramuka di lingkungan sekolah setiap hari Jumat sore.',
-  },
-  {
-    image: 'https://wpvip.edutopia.org/wp-content/uploads/2022/10/shutterstock_1958383675-crop.jpg',
-    title: 'Lomba Sains',
-    date: '2025-05-15',
-    description: 'SMP Alhilal meraih juara 1 dalam lomba sains tingkat kabupaten.',
-  },
-  {
-    image: 'https://wpvip.edutopia.org/wp-content/uploads/2022/10/shutterstock_1958383675-crop.jpg',
-    title: 'Kunjungan Industri',
-    date: '2025-04-30',
-    description: 'Siswa kelas 9 melakukan kunjungan edukatif ke perusahaan teknologi lokal.',
-  },
-  {
-    image: 'https://wpvip.edutopia.org/wp-content/uploads/2022/10/shutterstock_1958383675-crop.jpg',
-    title: 'Pelatihan Digital',
-    date: '2025-04-10',
-    description: 'Guru mengikuti pelatihan transformasi digital selama dua hari.',
-  },
-])
+const toastRef = ref(null)
+const typeToast = ref()
+const authStore = useAuthStore()
+const newsData = ref([])
 const pagination = reactive({
   currentPage: 1,
   showPage: 10,
@@ -36,14 +16,27 @@ function formatDate(dateStr) {
   const options = { year: 'numeric', month: 'long', day: 'numeric' }
   return new Date(dateStr).toLocaleDateString('id-ID', options)
 }
-const paginatedContents = computed(() => {
-  const start = (pagination.currentPage - 1) * pagination.showPage
-  const end = start + pagination.showPage
-  return contents.value.slice(start, end)
-})
 function updatePagination(field, value) {
   pagination[field] = value
 }
+async function fetchNewsList() {
+  await authStore.newsListData()
+  if (authStore.message) {
+    typeToast.value = 'error'
+    toastRef.value.addToast(authStore.message)
+  }
+  const mimeType = 'image/jpeg'
+  authStore.news.forEach((element) => {
+    element.image = `data:${mimeType};base64,${element.image}`
+  })
+  newsData.value = authStore.news
+  const start = (pagination.currentPage - 1) * pagination.showPage
+  const end = start + pagination.showPage
+  return newsData.value.slice(start, end)
+}
+onMounted(() => {
+  fetchNewsList()
+})
 </script>
 
 <template>
@@ -56,7 +49,7 @@ function updatePagination(field, value) {
       <div class="py-8">
         <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           <div
-            v-for="(item, index) in paginatedContents"
+            v-for="(item, index) in newsData"
             :key="index"
             class="bg-white rounded shadow hover:shadow-md transition p-4 flex flex-col"
           >
@@ -72,8 +65,8 @@ function updatePagination(field, value) {
         </div>
       </div>
       <PaginationField
-        v-if="contents.length"
-        :totalItems="contents.length"
+        v-if="newsData.length"
+        :totalItems="newsData.length"
         :itemsPerPage="pagination.showPage"
         :currentPage="pagination.currentPage"
         :showPage="pagination.showPage"
@@ -81,5 +74,6 @@ function updatePagination(field, value) {
         @update:showPage="updatePagination('showPage', $event)"
       />
     </section>
+    <ToastMessage ref="toastRef" :type="typeToast" />
   </div>
 </template>

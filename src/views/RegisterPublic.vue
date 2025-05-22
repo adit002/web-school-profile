@@ -5,8 +5,10 @@ import ToastMessage from '@/components/common/ToastMessage.vue'
 import SelectField from '@/components/common/SelectField.vue'
 import DatepickerRange from '@/components/common/DatepickerRange.vue'
 import FileUploader from '@/components/common/FileUploader.vue'
-
 import { ref } from 'vue'
+import { useAuthStore } from '@/store/authStore'
+
+const authStore = useAuthStore()
 const toastRef = ref(null)
 const typeToast = ref()
 const fileUploaderAkte = ref(null)
@@ -18,7 +20,7 @@ const form = ref({
   place_of_birth: '',
   date_of_birth: '',
   address: '',
-  parent: '',
+  parent_name: '',
   email: '',
   phone: '',
   image_akte: '',
@@ -32,7 +34,7 @@ const formErrors = ref({
   place_of_birth: '',
   date_of_birth: '',
   address: '',
-  parent: '',
+  parent_name: '',
   email: '',
   phone: '',
   image_akte: '',
@@ -47,13 +49,13 @@ const dropdownOptions = ref({
   ],
 })
 
-function submitForm() {
+async function submitForm() {
   formErrors.value.name = form.value.name ? '' : 'Nama lengkap wajib diisi'
   formErrors.value.gender = form.value.gender ? '' : 'Jenis kelamin wajib diisi'
   formErrors.value.place_of_birth = form.value.place_of_birth ? '' : 'Tempat lahir wajib diisi'
   formErrors.value.date_of_birth = form.value.date_of_birth ? '' : 'Tanggal lahir wajib diisi'
   formErrors.value.address = form.value.address ? '' : 'Alamat wajib diisi'
-  formErrors.value.parent = form.value.parent ? '' : 'Nama orang tua/wali wajib diisi'
+  formErrors.value.parent_name = form.value.parent_name ? '' : 'Nama orang tua/wali wajib diisi'
   formErrors.value.phone = form.value.phone ? '' : 'Nomor HP wajib diisi'
   formErrors.value.image_akte = fileUploaderAkte.value.files.length ? '' : 'Foto akte wajib diisi'
   formErrors.value.image_ijazah = fileUploaderIjazah.value.files.length
@@ -63,12 +65,33 @@ function submitForm() {
     ? ''
     : 'Foto SKHUN wajib diisi'
 
+  form.value.image_akte = fileUploaderAkte.value.files.length
+    ? fileUploaderAkte.value.files[0].base64
+    : ''
+  form.value.image_ijazah = fileUploaderIjazah.value.files.length
+    ? fileUploaderIjazah.value.files[0].base64
+    : ''
+
+  form.value.image_skhun = fileUploaderSkhun.value.files.length
+    ? fileUploaderSkhun.value.files[0].base64
+    : ''
+
   const isValid = Object.values(formErrors.value).every((error) => error === '')
   if (isValid) {
-    console.log('Form is valid')
-  } else {
-    console.log('Form has errors')
+    await authStore.registerAddData(form.value)
+    typeToast.value = authStore.message.includes('Success') ? 'success' : 'error'
+    toastRef.value.addToast(authStore.message)
+    if (authStore.message.includes('Success')) {
+      resetForm()
+    }
   }
+}
+
+function resetForm() {
+  Object.keys(form.value).forEach((key) => (form.value[key] = ''))
+  fileUploaderAkte.value.clearFiles()
+  fileUploaderIjazah.value.clearFiles()
+  fileUploaderSkhun.value.clearFiles()
 }
 </script>
 
@@ -125,12 +148,12 @@ function submitForm() {
           >
           </InputField>
           <InputField
-            v-model="form.parent"
-            id="parent"
+            v-model="form.parent_name"
+            id="parent_name"
             placeholder="Nama Orang Tua/Wali"
             label="Nama Orang Tua/Wali"
-            :error="formErrors.parent"
-            @update:error="formErrors.parent = $event"
+            :error="formErrors.parent_name"
+            @update:error="formErrors.parent_name = $event"
           >
           </InputField>
           <InputField
@@ -147,7 +170,6 @@ function submitForm() {
             id="phone"
             placeholder="Nomor HP"
             label="Nomor HP"
-            type="number"
             :error="formErrors.phone"
             @update:error="formErrors.phone = $event"
           >
