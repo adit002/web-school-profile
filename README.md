@@ -43,13 +43,13 @@ npm run lint
 ### build docker
 
 ```sh
-docker build -t dashboard_triton .
+docker build -t web-school-profile .
 ```
 
 ### compose docker
 
 ```sh
-docker docker compose up -d
+docker compose up -d
 ```
 
 ### down docker
