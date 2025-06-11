@@ -87,7 +87,7 @@ router.beforeEach((to, from, next) => {
   }
 
   if (to.name === 'Login' && authStore.token) {
-    return next({ name: 'Home' })
+    return next({ name: 'Beranda' })
   }
 
   next()
