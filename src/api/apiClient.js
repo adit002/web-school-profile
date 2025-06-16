@@ -23,7 +23,7 @@ apiClient.interceptors.response.use(
   (error) => {
     console.error('API Error:', error.response?.data?.message || error.message)
     if (
-      ['Token is expired', 'Token is not valid'].includes(
+      ['Invalid token format', 'Invalid token', 'No token provided'].includes(
         error.response?.data?.message || error.message,
       )
     ) {
